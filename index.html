@@ -27,6 +27,8 @@
   table { border-collapse:collapse; width:100%; font-variant-numeric:tabular-nums; }
   td { padding:4px 0; border-bottom:1px solid var(--line); }
   td:last-child { text-align:right; }
+  a { color:var(--accent); }
+  .flag { color:#b85c00; }
 </style>
 </head>
 <body>
@@ -41,9 +43,13 @@
   </table>
 
   <div class="card">
-    <label for="ci">Your common interest</label>
+    <label for="unit">Your unit</label>
+    <input id="unit" type="text" list="unitList" placeholder="e.g. 4B or PH1-A" autocomplete="off" autocapitalize="characters">
+    <datalist id="unitList"></datalist>
+    <p class="muted" id="unitMsg" style="margin-top:6px">Type your unit to fill in its common interest from the offering plan.</p>
+    <label for="ci" style="margin-top:12px">Your common interest</label>
     <div class="row"><input id="ci" type="number" step="0.001" min="0" value="0.500" inputmode="decimal"><span class="unit">%</span></div>
-    <p class="muted" style="margin-top:6px">It's on your deed, which you can find on NYC's ACRIS system.</p>
+    <p class="muted" style="margin-top:6px">It's on your deed, which you can find on NYC's ACRIS system. If yours is different, type it in. <a href="#" id="resetCi" hidden>Reset to offering plan</a></p>
     <div class="out">Your share: <b id="share"></b></div>
     <div class="math" id="shareMath"></div>
   </div>
@@ -76,6 +82,11 @@
 </main>
 <script>
   const PAYING = 80.048 - 0.384; // 79.664
+  // Offering plan common interest (%) by unit, from Langston_Common_Interest_final.xlsx
+  const UNITS = {"1O":0.303,"1P":0.258,"1Q":0.25,"1R":0.42,"1S":0.4,"1T":0.384,"1U":0.623,"1V":0.492,"1W":0.614,"2O":0.413,"2P":0.278,"2Q":0.28,"2R":0.42,"2S":0.4,"2T":0.384,"2U":0.46,"2V":0.363,"2W":0.453,"3B":0.529,"3C":0.642,"3D":0.693,"3E":0.588,"3F":0.389,"3G":0.29,"3H":0.528,"3I":0.407,"3J":0.415,"3K":0.415,"3L":0.407,"3M":0.516,"3N":0.413,"3O":0.414,"3P":0.414,"3Q":0.28,"3R":0.42,"3S":0.4,"3T":0.384,"3U":0.46,"3V":0.363,"3W":0.614,"4A":0.394,"4B":0.391,"4C":0.474,"4D":0.511,"4E":0.434,"4F":0.389,"4G":0.29,"4H":0.528,"4I":0.407,"4J":0.415,"4K":0.415,"4L":0.407,"4M":0.516,"4N":0.413,"4O":0.414,"4P":0.414,"4Q":0.28,"4R":0.42,"4S":0.4,"4T":0.384,"4U":0.46,"4V":0.363,"4W":0.453,"5A":0.394,"5B":0.391,"5C":0.474,"5D":0.511,"5E":0.434,"5F":0.389,"5G":0.29,"5H":0.528,"5I":0.407,"5J":0.415,"5K":0.415,"5L":0.407,"5M":0.516,"5N":0.413,"5O":0.414,"5P":0.414,"5Q":0.28,"5R":0.42,"5S":0.4,"5T":0.384,"5U":0.46,"5V":0.363,"5W":0.453,"6A":0.394,"6B":0.391,"6C":0.474,"6D":0.511,"6E":0.434,"6F":0.389,"6G":0.29,"6H":0.528,"6I":0.407,"6J":0.415,"6K":0.415,"6L":0.407,"6M":0.516,"6N":0.413,"6O":0.414,"6P":0.414,"6Q":0.28,"6R":0.42,"6S":0.4,"6T":0.384,"6U":0.46,"6V":0.363,"6W":0.453,"7A":0.394,"7B":0.391,"7C":0.474,"7D":0.511,"7E":0.434,"7F":0.389,"7G":0.29,"7H":0.528,"7I":0.407,"7J":0.415,"7K":0.415,"7L":0.407,"7M":0.516,"7N":0.413,"7O":0.414,"7P":0.414,"7Q":0.28,"7R":0.42,"7S":0.4,"7T":0.384,"7U":0.46,"7V":0.363,"7W":0.453,"8A":0.394,"8B":0.391,"8C":0.474,"8D":0.511,"8E":0.434,"8F":0.389,"8G":0.29,"8H":0.528,"8I":0.407,"8J":0.415,"8K":0.415,"8L":0.407,"8M":0.516,"8N":0.413,"8O":0.414,"8P":0.414,"8Q":0.28,"8R":0.42,"8S":0.4,"8T":0.384,"8U":0.46,"8V":0.363,"8W":0.453,"PH1-A":0.394,"PH1-B":0.391,"PH1-C":0.474,"PH1-D":0.472,"PH1-G":0.794,"PH1-H":0.822,"PH1-I":0.786,"PH1-J":0.786,"PH1-K":0.786,"PH1-L":0.786,"PH1-M":0.782,"PH1-N":0.788,"PH1-O":0.788,"PH1-P":0.788,"PH1-Q":0.788,"PH1-R":0.755,"PH1-S":0.771,"PH1-V":0.523,"PH1-W":0.279,"PH2-A":0.394,"PH2-B":0.391,"PH2-C":0.474,"PH2-D":0.349,"PH2-V":0.386,"PH2-W":0.265};
+  const norm = u => String(u).toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const LOOKUP = {};
+  Object.keys(UNITS).forEach(k => { LOOKUP[norm(k)] = k; });
   const $ = id => document.getElementById(id);
   const num = id => { const v = parseFloat($(id).value); return isFinite(v) ? v : NaN; };
   const money = (v, d = 0) => isFinite(v) ? '$' + v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) : '-';
@@ -103,7 +114,35 @@
     $('backAnnual').textContent = money(bm * 12);
     $('backMath').textContent = isFinite(bm) ? `${money(bill, 2)} / ${(share * 100).toFixed(4)}%, then x 12` : '';
   }
-  document.querySelectorAll('input').forEach(i => i.addEventListener('input', update));
+  const dl = $('unitList');
+  Object.keys(UNITS).forEach(k => { const o = document.createElement('option'); o.value = k; dl.appendChild(o); });
+
+  let planCi = null;
+  function showPlanStatus() {
+    const msg = $('unitMsg'), reset = $('resetCi');
+    if (planCi === null) { reset.hidden = true; return; }
+    const differs = Math.abs(num('ci') - planCi) > 1e-9;
+    reset.hidden = !differs;
+    msg.className = differs ? 'muted flag' : 'muted';
+    msg.textContent = differs
+      ? `Using your number, ${num('ci')}%. The offering plan says ${planCi.toFixed(3)}% for unit ${$('unit').dataset.key}.`
+      : `Unit ${$('unit').dataset.key}: ${planCi.toFixed(3)}% per the offering plan.`;
+  }
+  $('unit').addEventListener('input', () => {
+    const v = $('unit').value, key = LOOKUP[norm(v)];
+    if (key) {
+      planCi = UNITS[key]; $('unit').dataset.key = key;
+      $('ci').value = planCi.toFixed(3);
+      update(); showPlanStatus();
+    } else {
+      planCi = null; $('resetCi').hidden = true;
+      $('unitMsg').className = 'muted';
+      $('unitMsg').textContent = v.trim() ? 'No unit by that number. Check it, or type your common interest below.' : 'Type your unit to fill in its common interest from the offering plan.';
+    }
+  });
+  $('resetCi').addEventListener('click', e => { e.preventDefault(); $('ci').value = planCi.toFixed(3); update(); showPlanStatus(); });
+  document.querySelectorAll('input').forEach(i => { if (i.id !== 'unit') i.addEventListener('input', update); });
+  $('ci').addEventListener('input', showPlanStatus);
   update();
 </script>
 </body>
