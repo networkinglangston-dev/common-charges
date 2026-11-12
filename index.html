@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Common Charge Calculator</title>
+<style>
+  :root { --fg:#1d1d1f; --muted:#666; --line:#ddd; --bg:#fff; --card:#f6f6f4; --accent:#1f5f8b; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg:#eee; --muted:#aaa; --line:#333; --bg:#161616; --card:#202020; --accent:#7fb3d9; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+  main { max-width:640px; margin:0 auto; padding:24px 18px 48px; }
+  h1 { font-size:1.5rem; margin:0 0 6px; }
+  h2 { font-size:1.05rem; margin:28px 0 8px; }
+  p { margin:0 0 10px; }
+  .muted { color:var(--muted); font-size:.92rem; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-top:12px; }
+  label { display:block; font-weight:600; margin-bottom:4px; }
+  .row { display:flex; align-items:center; gap:6px; }
+  input { width:100%; font:inherit; padding:9px 10px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg); }
+  .unit { color:var(--muted); min-width:1.2em; }
+  .out { margin-top:10px; font-size:1.05rem; }
+  .out b { color:var(--accent); font-variant-numeric:tabular-nums; }
+  .math { color:var(--muted); font-size:.88rem; font-variant-numeric:tabular-nums; }
+  table { border-collapse:collapse; width:100%; font-variant-numeric:tabular-nums; }
+  td { padding:4px 0; border-bottom:1px solid var(--line); }
+  td:last-child { text-align:right; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Common Charge Calculator</h1>
+  <p class="muted">Residential common charges are split by each unit's percentage of common interest, among the units that pay them.</p>
+
+  <table>
+    <tr><td>All residential units</td><td>80.048%</td></tr>
+    <tr><td>Super's unit (doesn't pay)</td><td>-0.384%</td></tr>
+    <tr><td><strong>Paying units</strong></td><td><strong>79.664%</strong></td></tr>
+  </table>
+
+  <div class="card">
+    <label for="ci">Your common interest</label>
+    <div class="row"><input id="ci" type="number" step="0.001" min="0" value="0.500" inputmode="decimal"><span class="unit">%</span></div>
+    <p class="muted" style="margin-top:6px">It's on your deed, which you can find on NYC's ACRIS system.</p>
+    <div class="out">Your share: <b id="share"></b></div>
+    <div class="math" id="shareMath"></div>
+  </div>
+
+  <h2>Monthly charge from the annual budget</h2>
+  <div class="card">
+    <label for="annual">Annual residential common charges</label>
+    <div class="row"><span class="unit">$</span><input id="annual" type="number" step="1000" min="0" value="1700000" inputmode="decimal"></div>
+    <div class="out">Your monthly charge: <b id="monthly"></b></div>
+    <div class="math" id="monthlyMath"></div>
+  </div>
+
+  <h2>Your share of an assessment</h2>
+  <div class="card">
+    <label for="assess">Total assessment</label>
+    <div class="row"><span class="unit">$</span><input id="assess" type="number" step="1000" min="0" value="100000" inputmode="decimal"></div>
+    <div class="out">Your share: <b id="assessShare"></b></div>
+    <div class="math" id="assessMath"></div>
+  </div>
+
+  <h2>Working back from your bill</h2>
+  <div class="card">
+    <label for="bill">Your monthly common charge</label>
+    <div class="row"><span class="unit">$</span><input id="bill" type="number" step="1" min="0" value="850" inputmode="decimal"></div>
+    <div class="out">Total residential charges: <b id="backMonthly"></b> a month, <b id="backAnnual"></b> a year</div>
+    <div class="math" id="backMath"></div>
+  </div>
+
+  <p class="muted" style="margin-top:24px">Actual bills may differ slightly due to rounding.</p>
+</main>
+<script>
+  const PAYING = 80.048 - 0.384; // 79.664
+  const $ = id => document.getElementById(id);
+  const num = id => { const v = parseFloat($(id).value); return isFinite(v) ? v : NaN; };
+  const money = (v, d = 0) => isFinite(v) ? '$' + v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) : '-';
+  const pct = v => isFinite(v) ? v.toFixed(3) + '%' : '-';
+
+  function update() {
+    const ci = num('ci');
+    const share = ci / PAYING; // fraction
+    $('share').textContent = pct(share * 100);
+    $('shareMath').textContent = isFinite(share) ? `${ci}% / 79.664% = ${(share * 100).toFixed(4)}%` : '';
+
+    const annual = num('annual');
+    const monthly = annual * share / 12;
+    $('monthly').textContent = money(monthly, 2);
+    $('monthlyMath').textContent = isFinite(monthly) ? `${money(annual)} x ${(share * 100).toFixed(4)}% / 12` : '';
+
+    const assess = num('assess');
+    const a = assess * share;
+    $('assessShare').textContent = money(a, 2);
+    $('assessMath').textContent = isFinite(a) ? `${money(assess)} x ${(share * 100).toFixed(4)}%` : '';
+
+    const bill = num('bill');
+    const bm = share > 0 ? bill / share : NaN;
+    $('backMonthly').textContent = money(bm);
+    $('backAnnual').textContent = money(bm * 12);
+    $('backMath').textContent = isFinite(bm) ? `${money(bill, 2)} / ${(share * 100).toFixed(4)}%, then x 12` : '';
+  }
+  document.querySelectorAll('input').forEach(i => i.addEventListener('input', update));
+  update();
+</script>
+</body>
+</html>
