@@ -34,7 +34,7 @@
 <body>
 <main>
   <h1>What Are My Common Charges?</h1>
-  <p>Each apartment pays a set share of the building's budget, and bigger apartments pay a bigger share. Type in your apartment and the page does the math.</p>
+  <p>Each apartment pays a set share of what the apartments cover, and bigger apartments pay a bigger share. Type in your apartment and the page does the math.</p>
 
   <div class="card">
     <span class="step">Step 1</span>
@@ -48,16 +48,16 @@
     <div class="row"><input id="ci" type="text" inputmode="decimal" placeholder="Fills in when you pick your apartment"><span class="unit">%</span></div>
     <p class="muted" style="margin-top:6px">This number is called your "common interest." It comes from the building's offering plan and is also on your deed. If your deed says something different, type your number here instead. <a href="#" id="resetCi" hidden>Go back to the offering plan number</a></p>
 
-    <div class="answer">Your share of the budget: <b id="share">-</b></div>
+    <div class="answer">Your share: <b id="share">-</b></div>
     <div class="how" id="shareHow"></div>
   </div>
 
   <div class="card">
     <span class="step">Step 2</span>
     <h2>Your monthly common charge</h2>
-    <label for="annual">Building's yearly budget for residential common charges</label>
+    <label for="annual">Yearly amount the apartments cover</label>
     <div class="row"><span class="unit">$</span><input id="annual" type="text" inputmode="decimal" value="1,800,000"></div>
-    <p class="muted" style="margin-top:6px">$1,800,000 is just an example. Put in the real number from the budget.</p>
+    <p class="muted" style="margin-top:6px">This is the building's total budget minus commercial common charges and other projected income. $1,800,000 is just an example.</p>
     <div class="answer">You pay about <b id="monthly">-</b> a month</div>
     <div class="how" id="monthlyHow"></div>
   </div>
@@ -74,17 +74,17 @@
 
   <div class="card">
     <span class="step">Extra</span>
-    <h2>Check the budget from your bill</h2>
+    <h2>Work backward from your bill</h2>
     <label for="bill">What you pay now each month</label>
     <div class="row"><span class="unit">$</span><input id="bill" type="text" inputmode="decimal" placeholder="For example 850"></div>
-    <div class="answer">That means the whole building pays about <b id="backMonthly">-</b> a month, or <b id="backAnnual">-</b> a year</div>
+    <div class="answer">That means the apartments pay about <b id="backMonthly">-</b> a month, or <b id="backAnnual">-</b> a year</div>
     <div class="how" id="backHow"></div>
   </div>
 
   <details>
     <summary>Where the numbers come from</summary>
     <p style="margin-top:8px">All the apartments together own 80.048% of the building. The super's apartment (1T, 0.384%) doesn't pay common charges, so the apartments that pay add up to 79.664%.</p>
-    <p>Your share is your percentage divided by 79.664%. Then your share is multiplied by the budget. Apartments with the same percentage always pay the same amount.</p>
+    <p>Your share is your percentage divided by 79.664%. Then your share is multiplied by the amount the apartments cover, which is the total budget minus commercial common charges and other projected income. Apartments with the same percentage always pay the same amount.</p>
   </details>
 
   <p class="muted" style="margin-top:20px">Your actual bill may be off by a few cents because of rounding.</p>
